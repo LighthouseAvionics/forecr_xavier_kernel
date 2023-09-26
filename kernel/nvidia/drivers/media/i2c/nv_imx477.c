@@ -1,10 +1,8 @@
 /*
  * imx477.c - imx477 sensor driver
  *
- * Copyright (c) 2020, RidgeRun. All rights reserved.
- * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
- *
- * Contact us: support@ridgerun.com
+ * Copyright (C) 2022, Leopardimaging Inc.
+ * Based on Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -38,7 +36,7 @@
 #define IMX477_SENSOR_INTERNAL_CLK_FREQ   840000000
 
 static const struct of_device_id imx477_of_match[] = {
-	{.compatible = "ridgerun,imx477",},
+	{.compatible = "sony,imx477",},
 	{},
 };
 
@@ -51,11 +49,6 @@ static const u32 ctrl_cid_list[] = {
 	TEGRA_CAMERA_CID_SENSOR_MODE_ID,
 };
 
-enum imx477_Config {
-	TWO_LANE_CONFIG,
-	FOUR_LANE_CONFIG,
-};
-
 struct imx477 {
 	struct i2c_client *i2c_client;
 	struct v4l2_subdev *subdev;
@@ -63,7 +56,6 @@ struct imx477 {
 	u32 frame_length;
 	struct camera_common_data *s_data;
 	struct tegracam_device *tc_dev;
-	enum imx477_Config config;
 };
 
 static const struct regmap_config sensor_regmap_config = {
@@ -71,10 +63,10 @@ static const struct regmap_config sensor_regmap_config = {
 	.val_bits = 8,
 	.cache_type = REGCACHE_RBTREE,
 #if KERNEL_VERSION(5, 4, 0) > LINUX_VERSION_CODE
-		.use_single_rw = true,
+	.use_single_rw = true,
 #else
-		.use_single_read = true,
-		.use_single_write = true,
+	.use_single_read = true,
+	.use_single_write = true,
 #endif
 };
 
@@ -152,28 +144,6 @@ static int imx477_set_group_hold(struct tegracam_device *tc_dev, bool val)
 	}
 
 	return 0;
-}
-
-static int imx477_get_fine_integ_time(struct imx477 *priv, u16 * fine_time)
-{
-	struct camera_common_data *s_data = priv->s_data;
-	int err = 0;
-	u8 reg_val[2];
-
-	err = imx477_read_reg(s_data, IMX477_FINE_INTEG_TIME_ADDR_MSB,
-			      &reg_val[0]);
-	if (err)
-		goto done;
-
-	err = imx477_read_reg(s_data, IMX477_FINE_INTEG_TIME_ADDR_LSB,
-			      &reg_val[1]);
-	if (err)
-		goto done;
-
-	*fine_time = (reg_val[0] << 8) | reg_val[1];
-
-done:
-	return err;
 }
 
 static int imx477_set_gain(struct tegracam_device *tc_dev, s64 val)
@@ -342,64 +312,16 @@ static int imx477_power_on(struct camera_common_data *s_data)
 		return err;
 	}
 
+	/*exit reset mode: XCLR */
 	if (pw->reset_gpio) {
-		if (gpio_cansleep(pw->reset_gpio))
-			gpio_set_value_cansleep(pw->reset_gpio, 0);
-		else
-			gpio_set_value(pw->reset_gpio, 0);
+		gpio_set_value(pw->reset_gpio, 0);
+		usleep_range(300000, 303000);
+		gpio_set_value(pw->reset_gpio, 1);
+		usleep_range(300000, 303000);
 	}
-
-	if (unlikely(!(pw->avdd || pw->iovdd || pw->dvdd)))
-		goto skip_power_seqn;
-
-	usleep_range(10, 20);
-
-	if (pw->avdd) {
-		err = regulator_enable(pw->avdd);
-		if (err)
-			goto imx477_avdd_fail;
-	}
-
-	if (pw->iovdd) {
-		err = regulator_enable(pw->iovdd);
-		if (err)
-			goto imx477_iovdd_fail;
-	}
-
-	if (pw->dvdd) {
-		err = regulator_enable(pw->dvdd);
-		if (err)
-			goto imx477_dvdd_fail;
-	}
-
-	usleep_range(10, 20);
-
-skip_power_seqn:
-	if (pw->reset_gpio) {
-		if (gpio_cansleep(pw->reset_gpio))
-			gpio_set_value_cansleep(pw->reset_gpio, 1);
-		else
-			gpio_set_value(pw->reset_gpio, 1);
-	}
-
-	/* Need to wait for t4 + t5 + t9 + t10 time as per the data sheet */
-	/* t4 - 200us, t5 - 21.2ms, t9 - 1.2ms t10 - 270 ms */
-	usleep_range(300000, 300100);
 
 	pw->state = SWITCH_ON;
-
 	return 0;
-
-imx477_dvdd_fail:
-	regulator_disable(pw->iovdd);
-
-imx477_iovdd_fail:
-	regulator_disable(pw->avdd);
-
-imx477_avdd_fail:
-	dev_err(dev, "%s failed.\n", __func__);
-
-	return -ENODEV;
 }
 
 static int imx477_power_off(struct camera_common_data *s_data)
@@ -413,28 +335,18 @@ static int imx477_power_off(struct camera_common_data *s_data)
 
 	if (pdata && pdata->power_off) {
 		err = pdata->power_off(pw);
-		if (err) {
+		if (!err)
+			goto power_off_done;
+		else
 			dev_err(dev, "%s failed.\n", __func__);
-			return err;
-		}
-	} else {
-		if (pw->reset_gpio) {
-			if (gpio_cansleep(pw->reset_gpio))
-				gpio_set_value_cansleep(pw->reset_gpio, 0);
-			else
-				gpio_set_value(pw->reset_gpio, 0);
-		}
-
-		usleep_range(10, 10);
-
-		if (pw->dvdd)
-			regulator_disable(pw->dvdd);
-		if (pw->iovdd)
-			regulator_disable(pw->iovdd);
-		if (pw->avdd)
-			regulator_disable(pw->avdd);
+		return err;
 	}
+	/* enter reset mode: XCLR */
+	usleep_range(300000, 303000);
+	if (pw->reset_gpio)
+		gpio_set_value(pw->reset_gpio, 0);
 
+power_off_done:
 	pw->state = SWITCH_OFF;
 
 	return 0;
@@ -448,22 +360,6 @@ static int imx477_power_put(struct tegracam_device *tc_dev)
 	if (unlikely(!pw))
 		return -EFAULT;
 
-	if (likely(pw->dvdd))
-		devm_regulator_put(pw->dvdd);
-
-	if (likely(pw->avdd))
-		devm_regulator_put(pw->avdd);
-
-	if (likely(pw->iovdd))
-		devm_regulator_put(pw->iovdd);
-
-	pw->dvdd = NULL;
-	pw->avdd = NULL;
-	pw->iovdd = NULL;
-
-	if (likely(pw->reset_gpio))
-		gpio_free(pw->reset_gpio);
-
 	return 0;
 }
 
@@ -473,65 +369,27 @@ static int imx477_power_get(struct tegracam_device *tc_dev)
 	struct camera_common_data *s_data = tc_dev->s_data;
 	struct camera_common_power_rail *pw = s_data->power;
 	struct camera_common_pdata *pdata = s_data->pdata;
+	const char *mclk_name;
 	struct clk *parent;
 	int err = 0;
 
-	if (!pdata) {
-		dev_err(dev, "pdata missing\n");
-		return -EFAULT;
+	mclk_name = pdata->mclk_name ?
+		    pdata->mclk_name : "extperiph1";
+	pw->mclk = devm_clk_get(dev, mclk_name);
+	if (IS_ERR(pw->mclk)) {
+		dev_err(dev, "unable to get clock %s\n", mclk_name);
+		return PTR_ERR(pw->mclk);
 	}
 
-	/* Sensor MCLK (aka. INCK) */
-	if (pdata->mclk_name) {
-		pw->mclk = devm_clk_get(dev, pdata->mclk_name);
-		if (IS_ERR(pw->mclk)) {
-			dev_err(dev, "unable to get clock %s\n",
-				pdata->mclk_name);
-			return PTR_ERR(pw->mclk);
-		}
+	parent = devm_clk_get(dev, "pllp_grtba");
+	if (IS_ERR(parent))
+		dev_err(dev, "devm_clk_get failed for pllp_grtba");
+	else
+		clk_set_parent(pw->mclk, parent);
 
-		if (pdata->parentclk_name) {
-			parent = devm_clk_get(dev, pdata->parentclk_name);
-			if (IS_ERR(parent)) {
-				dev_err(dev, "unable to get parent clock %s",
-					pdata->parentclk_name);
-			} else
-				clk_set_parent(pw->mclk, parent);
-		}
-	}
-
-	/* analog 2.8v */
-	if (pdata->regulators.avdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->avdd,
-						   pdata->regulators.avdd);
-	/* IO 1.8v */
-	if (pdata->regulators.iovdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->iovdd,
-						   pdata->regulators.iovdd);
-	/* dig 1.2v */
-	if (pdata->regulators.dvdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->dvdd,
-						   pdata->regulators.dvdd);
-	if (err) {
-		dev_err(dev, "%s: unable to get regulator(s)\n", __func__);
-		goto done;
-	}
-
-	/* Reset or ENABLE GPIO */
 	pw->reset_gpio = pdata->reset_gpio;
-	err = gpio_request(pw->reset_gpio, "cam_reset_gpio");
-	if (err < 0) {
-		dev_err(dev, "%s: unable to request reset_gpio (%d)\n",
-			__func__, err);
-		goto done;
-	}
 
-done:
 	pw->state = SWITCH_OFF;
-
 	return err;
 }
 
@@ -574,16 +432,6 @@ static struct camera_common_pdata *imx477_parse_dt(struct tegracam_device
 		dev_dbg(dev, "mclk name not present, "
 			"assume sensor driven externally\n");
 
-	err = of_property_read_string(np, "avdd-reg",
-				      &board_priv_pdata->regulators.avdd);
-	err |= of_property_read_string(np, "iovdd-reg",
-				       &board_priv_pdata->regulators.iovdd);
-	err |= of_property_read_string(np, "dvdd-reg",
-				       &board_priv_pdata->regulators.dvdd);
-	if (err)
-		dev_dbg(dev, "avdd, iovdd and/or dvdd reglrs. not present, "
-			"assume sensor powered independently\n");
-
 	board_priv_pdata->has_eeprom = of_property_read_bool(np, "has-eeprom");
 
 	return board_priv_pdata;
@@ -600,29 +448,14 @@ static int imx477_set_mode(struct tegracam_device *tc_dev)
 	struct camera_common_data *s_data = tc_dev->s_data;
 
 	int err = 0;
-	const char *config;
-	struct device_node *mode;
-	uint offset = ARRAY_SIZE(imx477_frmfmt);
 
 	dev_dbg(tc_dev->dev, "%s:\n", __func__);
-	mode = of_get_child_by_name(tc_dev->dev->of_node, "mode0");
-	err = of_property_read_string(mode, "num_lanes", &config);
-
-	if (config[0] == '4')
-		priv->config = FOUR_LANE_CONFIG;
-	else if (config[0] == '2')
-		priv->config = TWO_LANE_CONFIG;
-	else
-		dev_err(tc_dev->dev, "Unsupported config\n");
 
 	err = imx477_write_table(priv, mode_table[IMX477_MODE_COMMON]);
 	if (err)
 		return err;
 
-	if (priv->config == FOUR_LANE_CONFIG)
-		err = imx477_write_table(priv, mode_table[s_data->mode + offset]);
-	else
-		err = imx477_write_table(priv, mode_table[s_data->mode]);
+	err = imx477_write_table(priv, mode_table[s_data->mode]);
 	if (err)
 		return err;
 
@@ -631,10 +464,14 @@ static int imx477_set_mode(struct tegracam_device *tc_dev)
 
 static int imx477_start_streaming(struct tegracam_device *tc_dev)
 {
+	int err = 0;
 	struct imx477 *priv = (struct imx477 *)tegracam_get_privdata(tc_dev);
 
 	dev_dbg(tc_dev->dev, "%s:\n", __func__);
-	return imx477_write_table(priv, mode_table[IMX477_START_STREAM]);
+
+	err = imx477_write_table(priv, mode_table[IMX477_START_STREAM]);
+	usleep_range(300000, 303000);
+	return err;
 }
 
 static int imx477_stop_streaming(struct tegracam_device *tc_dev)
@@ -644,7 +481,7 @@ static int imx477_stop_streaming(struct tegracam_device *tc_dev)
 
 	dev_dbg(tc_dev->dev, "%s:\n", __func__);
 	err = imx477_write_table(priv, mode_table[IMX477_STOP_STREAM]);
-
+    usleep_range(300000, 303000);
 	return err;
 }
 
@@ -667,10 +504,15 @@ static int imx477_board_setup(struct imx477 *priv)
 {
 	struct camera_common_data *s_data = priv->s_data;
 	struct device *dev = s_data->dev;
-	u8 reg_val[2];
 	int err = 0;
 
 	// Skip mclk enable as this camera has an internal oscillator
+	err = camera_common_mclk_enable(s_data);
+	if (err) {
+		dev_err(dev,
+			"Error %d turning on mclk\n", err);
+		return err;
+	}
 
 	err = imx477_power_on(s_data);
 	if (err) {
@@ -678,31 +520,6 @@ static int imx477_board_setup(struct imx477 *priv)
 		goto done;
 	}
 
-	/* Probe sensor model id registers */
-	err = imx477_read_reg(s_data, IMX477_MODEL_ID_ADDR_MSB, &reg_val[0]);
-	if (err) {
-		dev_err(dev, "%s: error during i2c read probe (%d)\n",
-			__func__, err);
-		goto err_reg_probe;
-	}
-	err = imx477_read_reg(s_data, IMX477_MODEL_ID_ADDR_LSB, &reg_val[1]);
-	if (err) {
-		dev_err(dev, "%s: error during i2c read probe (%d)\n",
-			__func__, err);
-		goto err_reg_probe;
-	}
-
-	if (!((reg_val[0] == 0x00) && reg_val[1] == 0x00))
-		dev_err(dev, "%s: invalid sensor model id: %x%x\n",
-			__func__, reg_val[0], reg_val[1]);
-
-	/* Sensor fine integration time */
-	err = imx477_get_fine_integ_time(priv, &priv->fine_integ_time);
-	if (err)
-		dev_err(dev, "%s: error querying sensor fine integ. time\n",
-			__func__);
-
-err_reg_probe:
 	imx477_power_off(s_data);
 
 done:
@@ -810,5 +627,5 @@ static struct i2c_driver imx477_i2c_driver = {
 module_i2c_driver(imx477_i2c_driver);
 
 MODULE_DESCRIPTION("Media Controller driver for Sony IMX477");
-MODULE_AUTHOR("RidgeRun");
+MODULE_AUTHOR("Weicen Zhou <weicenz@leopardimaging.com>");
 MODULE_LICENSE("GPL v2");
