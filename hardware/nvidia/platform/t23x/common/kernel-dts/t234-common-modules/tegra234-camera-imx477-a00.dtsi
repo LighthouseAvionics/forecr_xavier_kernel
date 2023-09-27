@@ -32,7 +32,7 @@
 			port@1 {
 				reg = <1>;
 				liimx477_vi_in1: endpoint {
-					port-index = <2>;
+					port-index = <1>;
 					bus-width = <2>;
 					remote-endpoint = <&liimx477_csi_out1>;
 				};
@@ -40,7 +40,7 @@
 			port@2 {
 				reg = <2>;
 				liimx477_vi_in2: endpoint {
-					port-index = <4>;
+					port-index = <2>;
 					bus-width = <2>;
 					remote-endpoint = <&liimx477_csi_out2>;
 				};
@@ -358,7 +358,7 @@
 				};
 			};
 			i2c@1 {
-			imx477_c@1a {
+			imx477_b@1a {
 				compatible = "sony,imx477";
 
 				reg = <0x1a>;
@@ -473,7 +473,7 @@
 				mode0 {
 					mclk_khz = "24000";
 					num_lanes = "2";
-					tegra_sinterface = "serial_c";
+					tegra_sinterface = "serial_b";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
@@ -513,7 +513,7 @@
 				mode1 {
 					mclk_khz = "24000";
 					num_lanes = "2";
-					tegra_sinterface = "serial_c";
+					tegra_sinterface = "serial_b";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
@@ -556,7 +556,7 @@
 					port@0 {
 						reg = <0>;
 						liimx477_imx477_out1: endpoint {
-							port-index = <2>;
+							port-index = <1>;
 							bus-width = <2>;
 							remote-endpoint = <&liimx477_csi_in1>;
 							};
@@ -565,7 +565,7 @@
 				};
 			};
 			i2c@2 {
-			imx477_e@1a {
+			imx477_c@1a {
 				compatible = "sony,imx477";
 
 				reg = <0x1a>;
@@ -680,7 +680,7 @@
 				mode0 {
 					mclk_khz = "24000";
 					num_lanes = "2";
-					tegra_sinterface = "serial_e";
+					tegra_sinterface = "serial_c";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
@@ -720,7 +720,7 @@
 				mode1 {
 					mclk_khz = "24000";
 					num_lanes = "2";
-					tegra_sinterface = "serial_e";
+					tegra_sinterface = "serial_c";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
@@ -763,7 +763,7 @@
 					port@0 {
 						reg = <0>;
 						liimx477_imx477_out2: endpoint {
-							port-index = <4>;
+							port-index = <2>;
 							bus-width = <2>;
 							remote-endpoint = <&liimx477_csi_in2>;
 							};
@@ -772,7 +772,7 @@
 				};
 			};
 			i2c@3 {
-			imx477_g@1a {
+			imx477_d@1a {
 				compatible = "sony,imx477";
 
 				reg = <0x1a>;
@@ -887,7 +887,7 @@
 				mode0 {
 					mclk_khz = "24000";
 					num_lanes = "2";
-					tegra_sinterface = "serial_g";
+					tegra_sinterface = "serial_d";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
@@ -927,7 +927,7 @@
 				mode1 {
 					mclk_khz = "24000";
 					num_lanes = "2";
-					tegra_sinterface = "serial_g";
+					tegra_sinterface = "serial_d";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
@@ -970,7 +970,7 @@
 					port@0 {
 						reg = <0>;
 						liimx477_imx477_out3: endpoint {
-							port-index = <6>;
+							port-index = <3>;
 							bus-width = <2>;
 							remote-endpoint = <&liimx477_csi_in3>;
 							};
@@ -1054,7 +1054,7 @@
 					/* Driver v4l2 device name */
 					devname = "imx477 31-001a";
 					/* Declare the device-tree hierarchy to driver instance */
-					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@1/imx477_c@1a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@1/imx477_b@1a";
 				};
 			};
 			module2 {
@@ -1067,7 +1067,7 @@
 					/* Driver v4l2 device name */
 					devname = "imx477 32-001a";
 					/* Declare the device-tree hierarchy to driver instance */
-					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@2/imx477_e@1a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@2/imx477_c@1a";
 				};
 			};
 			module3 {
@@ -1080,7 +1080,7 @@
 					/* Driver v4l2 device name */
 					devname = "imx477 33-001a";
 					/* Declare the device-tree hierarchy to driver instance */
-					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@3/imx477_g@1a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@3/imx477_d@1a";
 				};
 			};
 		};

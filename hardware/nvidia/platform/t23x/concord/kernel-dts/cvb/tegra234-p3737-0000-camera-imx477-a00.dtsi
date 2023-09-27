@@ -73,14 +73,14 @@
 				i2c-mux,deselect-on-exit;
 				#address-cells = <1>;
 				#size-cells = <0>;
-				pca9570_c@24 {
+				pca9570_b@24 {
 					compatible = "nxp,pca9570";
 					reg = <0x24>;
-					channel = "c";
+					channel = "b";
 					drive_ic = "DRV8838";
 				};
 
-				imx477_c@1a {
+				imx477_b@1a {
 					/* Define any required hw resources needed by driver */
 					/* ie. clocks, io pins, power sources */
 					clocks = <&bpmp_clks TEGRA234_CLK_EXTPERIPH1>,
@@ -95,14 +95,14 @@
 				i2c-mux,deselect-on-exit;
 				#address-cells = <1>;
 				#size-cells = <0>;
-				pca9570_e@24 {
+				pca9570_c@24 {
 					compatible = "nxp,pca9570";
 					reg = <0x24>;
-					channel = "e";
+					channel = "c";
 					drive_ic = "DRV8838";
 				};
 
-				imx477_e@1a {
+				imx477_c@1a {
 					/* Define any required hw resources needed by driver */
 					/* ie. clocks, io pins, power sources */
 					clocks = <&bpmp_clks TEGRA234_CLK_EXTPERIPH1>,
@@ -117,14 +117,14 @@
 				i2c-mux,deselect-on-exit;
 				#address-cells = <1>;
 				#size-cells = <0>;
-				pca9570_g@24 {
+				pca9570_d@24 {
 					compatible = "nxp,pca9570";
 					reg = <0x24>;
-					channel = "g";
+					channel = "d";
 					drive_ic = "DRV8838";
 				};
 
-				imx477_g@1a {
+				imx477_d@1a {
 					/* Define any required hw resources needed by driver */
 					/* ie. clocks, io pins, power sources */
 					clocks = <&bpmp_clks TEGRA234_CLK_EXTPERIPH1>,
