@@ -38,7 +38,7 @@
 #define IMX477_SENSOR_INTERNAL_CLK_FREQ   840000000
 
 static const struct of_device_id imx477_of_match[] = {
-	{.compatible = "ridgerun,imx477",},
+	{.compatible = "sony,imx477",},
 	{},
 };
 
