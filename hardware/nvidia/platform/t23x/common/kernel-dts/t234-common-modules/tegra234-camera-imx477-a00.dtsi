@@ -207,7 +207,7 @@
 	};
 
 	i2c@3180000 {
-		tca9546@70 {
+		tca9548@70 {
 			i2c@0 {
 			imx477_a@1a {
 				compatible = "sony,imx477";
