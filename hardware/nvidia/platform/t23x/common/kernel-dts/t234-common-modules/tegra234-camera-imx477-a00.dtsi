@@ -211,6 +211,7 @@
 			i2c@0 {
 
 				imx477_a@1a {
+					compatible = "sony,imx477";
 					/* I2C device address */
 					reg = <0x1a>;
 
