@@ -835,6 +835,7 @@
 					};
 				};
 			};
+
 			i2c@3 {
 			imx477_d@1a {
 				compatible = "sony,imx477";
@@ -1254,6 +1255,7 @@
 					};
 				};
 			};
+
 			i2c@5 {
 			imx477_g@1a {
 				compatible = "sony,imx477";
@@ -1526,7 +1528,7 @@
 					/* Driver v4l2 device name */
 					devname = "imx477 30-001a";
 					/* Declare the device-tree hierarchy to driver instance */
-					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@0/imx477_a@1a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@0/imx477_a@1a";
 				};
 			};
 			module1 {
@@ -1539,7 +1541,7 @@
 					/* Driver v4l2 device name */
 					devname = "imx477 31-001a";
 					/* Declare the device-tree hierarchy to driver instance */
-					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@1/imx477_b@1a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@1/imx477_b@1a";
 				};
 			};
 			module2 {
@@ -1552,7 +1554,7 @@
 					/* Driver v4l2 device name */
 					devname = "imx477 32-001a";
 					/* Declare the device-tree hierarchy to driver instance */
-					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@2/imx477_c@1a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@2/imx477_c@1a";
 				};
 			};
 			module3 {
@@ -1565,7 +1567,33 @@
 					/* Driver v4l2 device name */
 					devname = "imx477 33-001a";
 					/* Declare the device-tree hierarchy to driver instance */
-					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9546@70/i2c@3/imx477_d@1a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@3/imx477_d@1a";
+				};
+			};
+			module4 {
+				badge = "imx477_centerright_liimx477";
+				position = "centerright";
+				orientation = "0";
+				drivernode0 {
+					/* Declare PCL support driver (classically known as guid)  */
+					pcl_id = "v4l2_sensor";
+					/* Driver v4l2 device name */
+					devname = "imx477 34-001a";
+					/* Declare the device-tree hierarchy to driver instance */
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@4/imx477_e@1a";
+				};
+			};
+			module5 {
+				badge = "imx477_centerright_liimx477";
+				position = "centerright";
+				orientation = "0";
+				drivernode0 {
+					/* Declare PCL support driver (classically known as guid)  */
+					pcl_id = "v4l2_sensor";
+					/* Driver v4l2 device name */
+					devname = "imx477 35-001a";
+					/* Declare the device-tree hierarchy to driver instance */
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@5/imx477_g@1a";
 				};
 			};
 		};
