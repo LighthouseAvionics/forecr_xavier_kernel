@@ -17,7 +17,7 @@
 
 / {
 	tegra-capture-vi {
-		num-channels = <4>;
+		num-channels = <6>;
 		ports {
 			#address-cells = <1>;
 			#size-cells = <0>;
