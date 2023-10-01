@@ -1571,8 +1571,8 @@
 				};
 			};
 			module4 {
-				badge = "imx477_centerright_liimx477";
-				position = "centerright";
+				badge = "imx477_topright_liimx477";
+				position = "topright";
 				orientation = "0";
 				drivernode0 {
 					/* Declare PCL support driver (classically known as guid)  */
@@ -1584,8 +1584,8 @@
 				};
 			};
 			module5 {
-				badge = "imx477_centerright_liimx477";
-				position = "centerright";
+				badge = "imx477_topleft_liimx477";
+				position = "topleft";
 				orientation = "0";
 				drivernode0 {
 					/* Declare PCL support driver (classically known as guid)  */
