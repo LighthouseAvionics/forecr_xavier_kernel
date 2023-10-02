@@ -102,7 +102,7 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 
-				imx477_g@1a {
+				imx477_f@1a {
 					reset-gpios = <&tegra_main_gpio CAM5_PWDN GPIO_ACTIVE_HIGH>;
 				};
 			};
