@@ -342,64 +342,9 @@ static int imx477_power_on(struct camera_common_data *s_data)
 		return err;
 	}
 
-	if (gpio_is_valid(pw->reset_gpio)) {
-		if (gpio_cansleep(pw->reset_gpio))
-			gpio_set_value_cansleep(pw->reset_gpio, 0);
-		else
-			gpio_set_value(pw->reset_gpio, 0);
-	}
-
-	if (unlikely(!(pw->avdd || pw->iovdd || pw->dvdd)))
-		goto skip_power_seqn;
-
-	usleep_range(10, 20);
-
-	if (pw->avdd) {
-		err = regulator_enable(pw->avdd);
-		if (err)
-			goto imx477_avdd_fail;
-	}
-
-	if (pw->iovdd) {
-		err = regulator_enable(pw->iovdd);
-		if (err)
-			goto imx477_iovdd_fail;
-	}
-
-	if (pw->dvdd) {
-		err = regulator_enable(pw->dvdd);
-		if (err)
-			goto imx477_dvdd_fail;
-	}
-
-	usleep_range(10, 20);
-
-skip_power_seqn:
-	if (gpio_is_valid(pw->reset_gpio)) {
-		if (gpio_cansleep(pw->reset_gpio))
-			gpio_set_value_cansleep(pw->reset_gpio, 1);
-		else
-			gpio_set_value(pw->reset_gpio, 1);
-	}
-
-	/* Need to wait for t4 + t5 + t9 + t10 time as per the data sheet */
-	/* t4 - 200us, t5 - 21.2ms, t9 - 1.2ms t10 - 270 ms */
-	usleep_range(300000, 300100);
-
 	pw->state = SWITCH_ON;
 
 	return 0;
-
-imx477_dvdd_fail:
-	regulator_disable(pw->iovdd);
-
-imx477_iovdd_fail:
-	regulator_disable(pw->avdd);
-
-imx477_avdd_fail:
-	dev_err(dev, "%s failed.\n", __func__);
-
-	return -ENODEV;
 }
 
 static int imx477_power_off(struct camera_common_data *s_data)
@@ -427,12 +372,14 @@ static int imx477_power_off(struct camera_common_data *s_data)
 
 		usleep_range(10, 10);
 
+		/*
 		if (pw->dvdd)
 			regulator_disable(pw->dvdd);
 		if (pw->iovdd)
 			regulator_disable(pw->iovdd);
 		if (pw->avdd)
 			regulator_disable(pw->avdd);
+		*/
 	}
 
 	pw->state = SWITCH_OFF;
@@ -447,7 +394,7 @@ static int imx477_power_put(struct tegracam_device *tc_dev)
 
 	if (unlikely(!pw))
 		return -EFAULT;
-
+	/*
 	if (likely(pw->dvdd))
 		devm_regulator_put(pw->dvdd);
 
@@ -460,7 +407,7 @@ static int imx477_power_put(struct tegracam_device *tc_dev)
 	pw->dvdd = NULL;
 	pw->avdd = NULL;
 	pw->iovdd = NULL;
-
+	*/
 	if (likely(pw->reset_gpio))
 		gpio_free(pw->reset_gpio);
 
@@ -499,27 +446,6 @@ static int imx477_power_get(struct tegracam_device *tc_dev)
 				clk_set_parent(pw->mclk, parent);
 		}
 	}
-
-	/* analog 2.8v */
-	if (pdata->regulators.avdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->avdd,
-						   pdata->regulators.avdd);
-	/* IO 1.8v */
-	if (pdata->regulators.iovdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->iovdd,
-						   pdata->regulators.iovdd);
-	/* dig 1.2v */
-	if (pdata->regulators.dvdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->dvdd,
-						   pdata->regulators.dvdd);
-	if (err) {
-		dev_err(dev, "%s: unable to get regulator(s)\n", __func__);
-		goto done;
-	}
-
 	/* Reset or ENABLE GPIO */
 	pw->reset_gpio = pdata->reset_gpio;
 	err = gpio_request(pw->reset_gpio, "cam_reset_gpio");
@@ -573,16 +499,6 @@ static struct camera_common_pdata *imx477_parse_dt(struct tegracam_device
 	if (err)
 		dev_dbg(dev, "mclk name not present, "
 			"assume sensor driven externally\n");
-
-	err = of_property_read_string(np, "avdd-reg",
-				      &board_priv_pdata->regulators.avdd);
-	err |= of_property_read_string(np, "iovdd-reg",
-				       &board_priv_pdata->regulators.iovdd);
-	err |= of_property_read_string(np, "dvdd-reg",
-				       &board_priv_pdata->regulators.dvdd);
-	if (err)
-		dev_dbg(dev, "avdd, iovdd and/or dvdd reglrs. not present, "
-			"assume sensor powered independently\n");
 
 	board_priv_pdata->has_eeprom = of_property_read_bool(np, "has-eeprom");
 
