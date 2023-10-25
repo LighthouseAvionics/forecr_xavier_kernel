@@ -1457,7 +1457,7 @@
 			};
 
 			i2c@5 {
-			imx477_f@1a {
+			imx477_g@1a {
 				compatible = "sony,imx477";
 
 				reg = <0x1a>;
@@ -1572,7 +1572,7 @@
 				mode0 {
 					mclk_khz = "24000";
 					num_lanes = "2";
-					tegra_sinterface = "serial_f";
+					tegra_sinterface = "serial_g";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
@@ -1612,7 +1612,7 @@
 				mode1 {
 					mclk_khz = "24000";
 					num_lanes = "2";
-					tegra_sinterface = "serial_f";
+					tegra_sinterface = "serial_g";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
@@ -1653,7 +1653,7 @@
 				mode2 {
 					mclk_khz = "24000";
 					num_lanes = "2";
-					tegra_sinterface = "serial_f";
+					tegra_sinterface = "serial_g";
 					phy_mode = "DPHY";
 					discontinuous_clk = "no";
 					dpcm_enable = "false";
@@ -1833,7 +1833,7 @@
 					/* Driver v4l2 device name */
 					devname = "imx477 35-001a";
 					/* Declare the device-tree hierarchy to driver instance */
-					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@5/imx477_f@1a";
+					proc-device-tree = "/proc/device-tree/i2c@3180000/tca9548@70/i2c@5/imx477_g@1a";
 				};
 			};
 		};
