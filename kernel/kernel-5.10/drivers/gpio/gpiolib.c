@@ -2512,6 +2512,7 @@ int gpiod_direction_output(struct gpio_desc *desc, int value)
 
 set_output_value:
 	ret = gpio_set_bias(desc);
+	gpiod_err(desc, "in the set_output_value tag with ret value (%d)", ret);
 	if (ret)
 		return ret;
 	return gpiod_direction_output_raw_commit(desc, value);
@@ -2525,6 +2526,7 @@ set_output_flag:
 	 */
 	if (ret == 0)
 		set_bit(FLAG_IS_OUT, &desc->flags);
+	gpiod_err(desc, "in the set_output_flag tag with ret value (%d)", ret);
 	return ret;
 }
 EXPORT_SYMBOL_GPL(gpiod_direction_output);
@@ -2658,7 +2660,8 @@ int gpiod_set_transitory(struct gpio_desc *desc, bool transitory)
 				gpio);
 		return 0;
 	}
-
+	if (rc < 0)
+		dev_err(&desc->gdev->dev, "error in gpiod_set_transitory");
 	return rc;
 }
 EXPORT_SYMBOL_GPL(gpiod_set_transitory);
@@ -4022,11 +4025,17 @@ int gpiod_configure_flags(struct gpio_desc *desc, const char *con_id,
 	}
 
 	/* Process flags */
-	if (dflags & GPIOD_FLAGS_BIT_DIR_OUT)
+	if (dflags & GPIOD_FLAGS_BIT_DIR_OUT) {
 		ret = gpiod_direction_output(desc,
 				!!(dflags & GPIOD_FLAGS_BIT_DIR_VAL));
-	else
+		if (ret < 0)
+			gpiod_err(desc, "gpiod_direction_output error (%d)", ret);
+	}
+	else {
 		ret = gpiod_direction_input(desc);
+		if (ret < 0)
+                        gpiod_err(desc, "gpiod_direction_input error (%d)", ret);
+	}
 
 	return ret;
 }

@@ -20,6 +20,7 @@
 
 
 static const struct i2c_device_id pcf857x_id[] = {
+	{ "pcf8574alh", 8 },
 	{ "pcf8574", 8 },
 	{ "pcf8574a", 8 },
 	{ "pca8574", 8 },
@@ -39,6 +40,7 @@ MODULE_DEVICE_TABLE(i2c, pcf857x_id);
 
 #ifdef CONFIG_OF
 static const struct of_device_id pcf857x_of_table[] = {
+	{ .compatible = "nxp,pcf8574alh" },
 	{ .compatible = "nxp,pcf8574" },
 	{ .compatible = "nxp,pcf8574a" },
 	{ .compatible = "nxp,pca8574" },
@@ -279,12 +281,21 @@ static int pcf857x_probe(struct i2c_client *client,
 		gpio->read	= i2c_read_le8;
 
 		if (!i2c_check_functionality(client->adapter,
-				I2C_FUNC_SMBUS_BYTE))
+				I2C_FUNC_SMBUS_BYTE)) {
 			status = -EIO;
+			dev_err(&client->dev, "in the i2c_check_functionality code (%d)\n", status);
+		}
 
 		/* fail if there's no chip present */
-		else
+		else {
 			status = i2c_smbus_read_byte(client);
+			dev_err(&client->dev, "in the else statement doing i2c_smbus_read_byte (%d).\n", status);
+			if (status < 0) {
+				i2c_smbus_write_byte(client, 0);
+				status = i2c_smbus_read_byte(client);
+				dev_err(&client->dev, "In extra write/read (%d).\n", status);
+			}
+		}
 
 	/* '75/'75c addresses are 0x20..0x27, just like the '74;
 	 * the '75c doesn't have a current source pulling high.
@@ -337,7 +348,7 @@ static int pcf857x_probe(struct i2c_client *client,
 	/* Enable irqchip if we have an interrupt */
 	if (client->irq) {
 		struct gpio_irq_chip *girq;
-
+		
 		gpio->irqchip.name = "pcf857x";
 		gpio->irqchip.irq_enable = pcf857x_irq_enable;
 		gpio->irqchip.irq_disable = pcf857x_irq_disable;
@@ -352,8 +363,10 @@ static int pcf857x_probe(struct i2c_client *client,
 					NULL, pcf857x_irq, IRQF_ONESHOT |
 					IRQF_TRIGGER_FALLING | IRQF_SHARED,
 					dev_name(&client->dev), gpio);
-		if (status)
+		if (status) {
+			dev_err(&client->dev, "in the irqchip failure");
 			goto fail;
+		}
 
 		girq = &gpio->chip.irq;
 		girq->chip = &gpio->irqchip;
@@ -367,8 +380,10 @@ static int pcf857x_probe(struct i2c_client *client,
 	}
 
 	status = devm_gpiochip_add_data(&client->dev, &gpio->chip, gpio);
-	if (status < 0)
+	if (status < 0) {
+		dev_err(&client->dev, "in the devm_gpiochip_add_data failure");
 		goto fail;
+	}
 
 	/* Let platform code set up the GPIOs and their users.
 	 * Now is the first time anyone could use them.
