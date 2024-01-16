@@ -7,6 +7,8 @@ Device Tree GPIO: hardware/nvidia/platform/t23x/concord/kernel-dts/cvb/tegra234-
 # Camera Files for Includes
 Driver Include as module or in Preloaded: kernel/kernel-5.10/arch/arm64/configs/dsboard_agx_defconfig
 Device Tree include: hardware/nvidia/platform/t23x/concord/kernel-dts/tegra234-p3701-0000-p3737-0000-dsboard-agx.dts
+Driver Makefile: kernel/nvidia/drivers/media/i2c/Makefile
+Driver KConfig: kernel/nvidia/drivers/media/i2c/Kconfig
 
 # Build Instructions
 cd ./kernel/kernel-5.10/
@@ -23,6 +25,14 @@ $HOME/kernel_out_dsboard_agx/arch/arm64/boot/dts/nvidia/tegra234-p3701-0005-p373
 $HOME/kernel_out_dsboard_agx/arch/arm64/boot/Image goes to heimdall:/boot/Image
 $HOME/kernel_out_dsboard_agx/arch/arm64/boot/dts/nvidia/tegra234-p3701-0005-p3737-0000-dsboard-agx.dtb goes to heimdall:/boot/dtb/kernel_tegra234-p3701-0005-p3737-0000.dtb
 
-
+# Adding new driver requirements
+1. New Device Tree .dtsi
+	- needs included in Device Tree include file listed above.
+	- needs labeled compatible with (new_driver_name)
+2. Driver files
+	- needs labeled with .compatible = "new_driver_name"
+	- needs entry in Makefile of same directory as driver
+	- needs entry in KConfig files of same directory as driver
+	- needs specified in defconfig file as either module or preloaded in kernel
 
 
