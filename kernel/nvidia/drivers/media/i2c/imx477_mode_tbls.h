@@ -789,10 +789,10 @@ static const imx477_reg imx477_mode_2028x1520_30fps[] = {
 	{0x030B, 0x01},
 	{0x030D, 0x04},
 	{0x030E, 0x00},
-	{0x030F, 0xAF},
+	{0x030F, 0xFA},
 	{0x0310, 0x01},
-	{0x0820, 0x08},
-	{0x0821, 0x32},
+	{0x0820, 0x0B},
+	{0x0821, 0xB8},
 	{0x0822, 0x00},
 	{0x0823, 0x00},
 	{0x080A, 0x00},
@@ -1096,10 +1096,14 @@ static const int imx477_60_fr[] = {
 	60,
 };
 
+static const int imx477_31_fr[] = {
+	31,
+};
+
 static const struct camera_common_frmfmt imx477_frmfmt[] = {
 	{{4056, 3040}, imx477_30_fr, 1, 0, IMX477_MODE_4056x3040_30FPS},
 	{{3840, 2160}, imx477_30_fr, 1, 0, IMX477_MODE_3840x2160_30FPS},
 	{{1920, 1080}, imx477_60_fr, 1, 0, IMX477_MODE_1920x1080_60FPS},
-	{{2028, 1520}, imx477_60_fr, 1, 0, IMX477_MODE_2028x1520_30FPS},
+	{{2028, 1520}, imx477_31_fr, 1, 0, IMX477_MODE_2028x1520_30FPS},
 };
 #endif /* __IMX477_I2C_TABLES__ */
