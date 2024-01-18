@@ -705,7 +705,7 @@ static const imx477_reg imx477_mode_1920x1080_60fps[] = {
 	{IMX477_TABLE_END, 0x0000}
 };
 
-static const imx477_reg imx477_mode_2028x1520_30fps[] = {
+static const imx477_reg imx477_mode_2028x1520_27fps[] = {
 	{0x0112, 0x0A},
 	{0x0113, 0x0A},
 	{0x0114, 0x01},
@@ -1068,7 +1068,7 @@ enum {
 	IMX477_MODE_4056x3040_30FPS,
 	IMX477_MODE_3840x2160_30FPS,
 	IMX477_MODE_1920x1080_60FPS,
-	IMX477_MODE_2028x1520_30FPS,
+	IMX477_MODE_2028x1520_27FPS,
 	IMX477_MODE_3840x2160_30FPS_4LANE,
 	IMX477_MODE_1920x1080_60FPS_4LANE,
 	IMX477_MODE_COMMON,
@@ -1080,7 +1080,7 @@ static const imx477_reg *mode_table[] = {
 	[IMX477_MODE_4056x3040_30FPS] = imx477_mode_4056x3040_30fps,
 	[IMX477_MODE_3840x2160_30FPS] = imx477_mode_3840x2160_30fps,
 	[IMX477_MODE_1920x1080_60FPS] = imx477_mode_1920x1080_60fps,
-	[IMX477_MODE_2028x1520_30FPS] = imx477_mode_2028x1520_30fps,
+	[IMX477_MODE_2028x1520_27FPS] = imx477_mode_2028x1520_27fps,
 	[IMX477_MODE_3840x2160_30FPS_4LANE] = imx477_mode_3840x2160_30fps_4lane,
 	[IMX477_MODE_1920x1080_60FPS_4LANE] = imx477_mode_1920x1080_60fps_4lane,
 	[IMX477_MODE_COMMON] = imx477_mode_common,
@@ -1096,7 +1096,7 @@ static const int imx477_60_fr[] = {
 	60,
 };
 
-static const int imx477_31_fr[] = {
+static const int imx477_27_fr[] = {
 	27,
 };
 
@@ -1104,6 +1104,6 @@ static const struct camera_common_frmfmt imx477_frmfmt[] = {
 	{{4056, 3040}, imx477_30_fr, 1, 0, IMX477_MODE_4056x3040_30FPS},
 	{{3840, 2160}, imx477_30_fr, 1, 0, IMX477_MODE_3840x2160_30FPS},
 	{{1920, 1080}, imx477_60_fr, 1, 0, IMX477_MODE_1920x1080_60FPS},
-	{{2028, 1520}, imx477_31_fr, 1, 0, IMX477_MODE_2028x1520_30FPS},
+	{{2028, 1520}, imx477_27_fr, 1, 0, IMX477_MODE_2028x1520_27FPS},
 };
 #endif /* __IMX477_I2C_TABLES__ */
