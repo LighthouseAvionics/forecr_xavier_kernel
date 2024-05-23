@@ -97,6 +97,9 @@ while (( "$#" )); do
         # Determine the remote directory
 	this_address_success=true
 	REMOTE_ADDRESS="$REMOTE_USER@$prefix$1"
+	ssh "$REMOTE_ADDRESS" "echo $PASSWORD | sudo -S apt-get update"
+	ssh "$REMOTE_ADDRESS" "echo $PASSWORD | sudo -S apt-get install rsync -y"
+
 	if [ "$OVERWRITE_KERNEL" == "yes" ]; then
 	    sshpass -p $PASSWORD rsync --rsync-path="sudo rsync" "$FILE1" "$REMOTE_ADDRESS:/boot/Image"
 
