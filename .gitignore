@@ -10,5 +10,5 @@ nvidia-oot/device-tree/platform/generic-dts/dtbs/*
 *.order
 *.symvers
 **_out/
-o_binary/
+*.o_binary
 *.S

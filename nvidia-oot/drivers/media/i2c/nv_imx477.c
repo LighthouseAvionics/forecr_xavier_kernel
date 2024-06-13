@@ -1,14 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
-// SPDX-FileCopyrightText: Copyright (c) 2021-2024, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 /*
+ * imx477.c - imx477 sensor driver
+ *
  * Copyright (c) 2020, RidgeRun. All rights reserved.
+ * Copyright (c) 2021-2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * Contact us: support@ridgerun.com
  *
- * nv_imx477.c - imx477 sensor driver
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <nvidia/conftest.h>
 
 #include <linux/slab.h>
 #include <linux/uaccess.h>
@@ -29,7 +38,7 @@
 #define IMX477_SENSOR_INTERNAL_CLK_FREQ   840000000
 
 static const struct of_device_id imx477_of_match[] = {
-	{.compatible = "ridgerun,imx477",},
+	{.compatible = "sony,imx477",},
 	{},
 };
 
@@ -61,11 +70,15 @@ static const struct regmap_config sensor_regmap_config = {
 	.reg_bits = 16,
 	.val_bits = 8,
 	.cache_type = REGCACHE_RBTREE,
-	.use_single_read = true,
-	.use_single_write = true,
+#if KERNEL_VERSION(5, 4, 0) > LINUX_VERSION_CODE
+		.use_single_rw = true,
+#else
+		.use_single_read = true,
+		.use_single_write = true,
+#endif
 };
 
-static inline void imx477_get_frame_length_regs(imx477_reg *regs,
+static inline void imx477_get_frame_length_regs(imx477_reg * regs,
 						u32 frame_length)
 {
 	regs->addr = IMX477_FRAME_LENGTH_ADDR_MSB;
@@ -74,7 +87,7 @@ static inline void imx477_get_frame_length_regs(imx477_reg *regs,
 	(regs + 1)->val = (frame_length) & 0xff;
 }
 
-static inline void imx477_get_coarse_integ_time_regs(imx477_reg *regs,
+static inline void imx477_get_coarse_integ_time_regs(imx477_reg * regs,
 						     u32 coarse_time)
 {
 	regs->addr = IMX477_COARSE_INTEG_TIME_ADDR_MSB;
@@ -83,7 +96,7 @@ static inline void imx477_get_coarse_integ_time_regs(imx477_reg *regs,
 	(regs + 1)->val = (coarse_time) & 0xff;
 }
 
-static inline void imx477_get_gain_reg(imx477_reg *reg, u16 gain)
+static inline void imx477_get_gain_reg(imx477_reg * reg, u16 gain)
 {
 	reg->addr = IMX477_ANALOG_GAIN_ADDR_MSB;
 	reg->val = (gain >> IMX477_SHIFT_8_BITS) & IMX477_MASK_LSB_2_BITS;
@@ -93,7 +106,7 @@ static inline void imx477_get_gain_reg(imx477_reg *reg, u16 gain)
 }
 
 static inline int imx477_read_reg(struct camera_common_data *s_data,
-				  u16 addr, u8 *val)
+				  u16 addr, u8 * val)
 {
 	int err = 0;
 	u32 reg_val = 0;
@@ -141,7 +154,7 @@ static int imx477_set_group_hold(struct tegracam_device *tc_dev, bool val)
 	return 0;
 }
 
-static int imx477_get_fine_integ_time(struct imx477 *priv, u16 *fine_time)
+static int imx477_get_fine_integ_time(struct imx477 *priv, u16 * fine_time)
 {
 	struct camera_common_data *s_data = priv->s_data;
 	int err = 0;
@@ -181,10 +194,8 @@ static int imx477_set_gain(struct tegracam_device *tc_dev, s64 val)
 		val = mode->control_properties.max_gain_val;
 
 	/* Gain Formula:
-	 * Gain = (IMX477_GAIN_C0 - (IMX477_GAIN_C0 * gain_factor / val))
+	   Gain = (IMX477_GAIN_C0 - (IMX477_GAIN_C0 * gain_factor / val))
 	 */
-	if (val == 0)
-		return -EINVAL;
 	gain =
 	    (s16) (IMX477_ANALOG_GAIN_C0 -
 		   (mode->control_properties.gain_factor *
@@ -227,9 +238,6 @@ static int imx477_set_frame_rate(struct tegracam_device *tc_dev, s64 val)
 
 	dev_dbg(dev, "%s: Setting framerate control to: %lld\n", __func__, val);
 
-	if (val == 0 || mode->image_properties.line_length == 0)
-		return -EINVAL;
-
 	frame_length = (u32) (IMX477_SENSOR_INTERNAL_CLK_FREQ *
 			      (u64) mode->control_properties.framerate_factor /
 			      mode->image_properties.line_length / val);
@@ -268,20 +276,12 @@ static int imx477_set_exposure(struct tegracam_device *tc_dev, s64 val)
 
 	int err = 0;
 	imx477_reg ct_regs[2];
-
 	const s32 max_coarse_time = priv->frame_length - IMX477_MAX_COARSE_DIFF;
-	s32 fine_integ_time_factor;
+	const s32 fine_integ_time_factor = priv->fine_integ_time *
+	    mode->control_properties.exposure_factor /
+	    IMX477_SENSOR_INTERNAL_CLK_FREQ;
 	u32 coarse_time;
 	int i;
-
-	if (mode->signal_properties.pixel_clock.val == 0 ||
-		 mode->control_properties.exposure_factor == 0 ||
-		 mode->image_properties.line_length == 0)
-		return -EINVAL;
-
-	fine_integ_time_factor = priv->fine_integ_time *
-		mode->control_properties.exposure_factor /
-		IMX477_SENSOR_INTERNAL_CLK_FREQ;
 
 	dev_dbg(dev, "%s: Setting exposure control to: %lld\n", __func__, val);
 
@@ -342,64 +342,9 @@ static int imx477_power_on(struct camera_common_data *s_data)
 		return err;
 	}
 
-	if (pw->reset_gpio) {
-		if (gpiod_cansleep(gpio_to_desc(pw->reset_gpio)))
-			gpio_set_value_cansleep(pw->reset_gpio, 0);
-		else
-			gpio_set_value(pw->reset_gpio, 0);
-	}
-
-	if (unlikely(!(pw->avdd || pw->iovdd || pw->dvdd)))
-		goto skip_power_seqn;
-
-	usleep_range(10, 20);
-
-	if (pw->avdd) {
-		err = regulator_enable(pw->avdd);
-		if (err)
-			goto imx477_avdd_fail;
-	}
-
-	if (pw->iovdd) {
-		err = regulator_enable(pw->iovdd);
-		if (err)
-			goto imx477_iovdd_fail;
-	}
-
-	if (pw->dvdd) {
-		err = regulator_enable(pw->dvdd);
-		if (err)
-			goto imx477_dvdd_fail;
-	}
-
-	usleep_range(10, 20);
-
-skip_power_seqn:
-	if (pw->reset_gpio) {
-		if (gpiod_cansleep(gpio_to_desc(pw->reset_gpio)))
-			gpio_set_value_cansleep(pw->reset_gpio, 1);
-		else
-			gpio_set_value(pw->reset_gpio, 1);
-	}
-
-	/* Need to wait for t4 + t5 + t9 + t10 time as per the data sheet */
-	/* t4 - 200us, t5 - 21.2ms, t9 - 1.2ms t10 - 270 ms */
-	usleep_range(300000, 300100);
-
 	pw->state = SWITCH_ON;
 
 	return 0;
-
-imx477_dvdd_fail:
-	regulator_disable(pw->iovdd);
-
-imx477_iovdd_fail:
-	regulator_disable(pw->avdd);
-
-imx477_avdd_fail:
-	dev_err(dev, "%s failed.\n", __func__);
-
-	return -ENODEV;
 }
 
 static int imx477_power_off(struct camera_common_data *s_data)
@@ -417,9 +362,9 @@ static int imx477_power_off(struct camera_common_data *s_data)
 			dev_err(dev, "%s failed.\n", __func__);
 			return err;
 		}
-	} else {
+	/*} else {
 		if (pw->reset_gpio) {
-			if (gpiod_cansleep(gpio_to_desc(pw->reset_gpio)))
+			if (gpio_cansleep(pw->reset_gpio))
 				gpio_set_value_cansleep(pw->reset_gpio, 0);
 			else
 				gpio_set_value(pw->reset_gpio, 0);
@@ -427,12 +372,14 @@ static int imx477_power_off(struct camera_common_data *s_data)
 
 		usleep_range(10, 10);
 
+		
 		if (pw->dvdd)
 			regulator_disable(pw->dvdd);
 		if (pw->iovdd)
 			regulator_disable(pw->iovdd);
 		if (pw->avdd)
 			regulator_disable(pw->avdd);
+		*/
 	}
 
 	pw->state = SWITCH_OFF;
@@ -447,7 +394,7 @@ static int imx477_power_put(struct tegracam_device *tc_dev)
 
 	if (unlikely(!pw))
 		return -EFAULT;
-
+	/*
 	if (likely(pw->dvdd))
 		devm_regulator_put(pw->dvdd);
 
@@ -460,9 +407,10 @@ static int imx477_power_put(struct tegracam_device *tc_dev)
 	pw->dvdd = NULL;
 	pw->avdd = NULL;
 	pw->iovdd = NULL;
-
-	if (likely(pw->reset_gpio))
+	*/
+	/*if (likely(pw->reset_gpio))
 		gpio_free(pw->reset_gpio);
+	*/
 
 	return 0;
 }
@@ -474,7 +422,7 @@ static int imx477_power_get(struct tegracam_device *tc_dev)
 	struct camera_common_power_rail *pw = s_data->power;
 	struct camera_common_pdata *pdata = s_data->pdata;
 	struct clk *parent;
-	int err = 0;
+	// int err = 0;
 
 	if (!pdata) {
 		dev_err(dev, "pdata missing\n");
@@ -499,29 +447,9 @@ static int imx477_power_get(struct tegracam_device *tc_dev)
 				clk_set_parent(pw->mclk, parent);
 		}
 	}
-
-	/* analog 2.8v */
-	if (pdata->regulators.avdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->avdd,
-						   pdata->regulators.avdd);
-	/* IO 1.8v */
-	if (pdata->regulators.iovdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->iovdd,
-						   pdata->regulators.iovdd);
-	/* dig 1.2v */
-	if (pdata->regulators.dvdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->dvdd,
-						   pdata->regulators.dvdd);
-	if (err) {
-		dev_err(dev, "%s: unable to get regulator(s)\n", __func__);
-		goto done;
-	}
-
+	return 0; // this is questionable because I'm not sure what the return values indicate.
 	/* Reset or ENABLE GPIO */
-	pw->reset_gpio = pdata->reset_gpio;
+	/*pw->reset_gpio = pdata->reset_gpio;
 	err = gpio_request(pw->reset_gpio, "cam_reset_gpio");
 	if (err < 0) {
 		dev_err(dev, "%s: unable to request reset_gpio (%d)\n",
@@ -533,6 +461,7 @@ done:
 	pw->state = SWITCH_OFF;
 
 	return err;
+	*/	
 }
 
 static struct camera_common_pdata *imx477_parse_dt(struct tegracam_device
@@ -542,9 +471,9 @@ static struct camera_common_pdata *imx477_parse_dt(struct tegracam_device
 	struct device_node *np = dev->of_node;
 	struct camera_common_pdata *board_priv_pdata;
 	const struct of_device_id *match;
-	struct camera_common_pdata *ret = NULL;
+	// struct camera_common_pdata *ret = NULL;
 	int err = 0;
-	int gpio;
+	// int gpio;
 
 	if (!np)
 		return NULL;
@@ -560,7 +489,7 @@ static struct camera_common_pdata *imx477_parse_dt(struct tegracam_device
 	if (!board_priv_pdata)
 		return NULL;
 
-	gpio = of_get_named_gpio(np, "reset-gpios", 0);
+	/*gpio = of_get_named_gpio(np, "reset-gpios", 0);
 	if (gpio < 0) {
 		if (gpio == -EPROBE_DEFER)
 			ret = ERR_PTR(-EPROBE_DEFER);
@@ -568,37 +497,28 @@ static struct camera_common_pdata *imx477_parse_dt(struct tegracam_device
 		goto error;
 	}
 	board_priv_pdata->reset_gpio = (unsigned int)gpio;
-
+	*/
 	err = of_property_read_string(np, "mclk", &board_priv_pdata->mclk_name);
 	if (err)
-		dev_dbg(dev,
-			"mclk name not present, assume sensor driven externally\n");
-
-	err = of_property_read_string(np, "avdd-reg",
-				      &board_priv_pdata->regulators.avdd);
-	err |= of_property_read_string(np, "iovdd-reg",
-				       &board_priv_pdata->regulators.iovdd);
-	err |= of_property_read_string(np, "dvdd-reg",
-				       &board_priv_pdata->regulators.dvdd);
-	if (err)
-		dev_dbg(dev,
-		"avdd, iovdd and/or dvdd reglrs. not present, assume sensor powered independently\n");
+		dev_dbg(dev, "mclk name not present, "
+			"assume sensor driven externally\n");
 
 	board_priv_pdata->has_eeprom = of_property_read_bool(np, "has-eeprom");
 
 	return board_priv_pdata;
-
+	/*
 error:
 	devm_kfree(dev, board_priv_pdata);
 
 	return ret;
+	*/
 }
 
 static int imx477_set_mode(struct tegracam_device *tc_dev)
 {
 	struct imx477 *priv = (struct imx477 *)tegracam_get_privdata(tc_dev);
 	struct camera_common_data *s_data = tc_dev->s_data;
-	unsigned int mode_index = 0;
+
 	int err = 0;
 	const char *config;
 	struct device_node *mode;
@@ -619,12 +539,10 @@ static int imx477_set_mode(struct tegracam_device *tc_dev)
 	if (err)
 		return err;
 
-	mode_index = s_data->mode;
 	if (priv->config == FOUR_LANE_CONFIG)
-		err = imx477_write_table(priv, mode_table[mode_index + offset]);
+		err = imx477_write_table(priv, mode_table[s_data->mode + offset]);
 	else
-		err = imx477_write_table(priv, mode_table[mode_index]);
-
+		err = imx477_write_table(priv, mode_table[s_data->mode]);
 	if (err)
 		return err;
 
@@ -672,7 +590,7 @@ static int imx477_board_setup(struct imx477 *priv)
 	u8 reg_val[2];
 	int err = 0;
 
-	/* Skip mclk enable as this camera has an internal oscillator */
+	// Skip mclk enable as this camera has an internal oscillator
 
 	err = imx477_power_on(s_data);
 	if (err) {
@@ -724,12 +642,8 @@ static const struct v4l2_subdev_internal_ops imx477_subdev_internal_ops = {
 	.open = imx477_open,
 };
 
-#if defined(NV_I2C_DRIVER_STRUCT_PROBE_WITHOUT_I2C_DEVICE_ID_ARG) /* Linux 6.3 */
-static int imx477_probe(struct i2c_client *client)
-#else
 static int imx477_probe(struct i2c_client *client,
 			const struct i2c_device_id *id)
-#endif
 {
 	struct device *dev = &client->dev;
 	struct tegracam_device *tc_dev;
@@ -784,30 +698,15 @@ static int imx477_probe(struct i2c_client *client,
 	return 0;
 }
 
-#if defined(NV_I2C_DRIVER_STRUCT_REMOVE_RETURN_TYPE_INT) /* Linux 6.1 */
 static int imx477_remove(struct i2c_client *client)
-#else
-static void imx477_remove(struct i2c_client *client)
-#endif
 {
 	struct camera_common_data *s_data = to_camera_common_data(&client->dev);
-	struct imx477 *priv;
-
-	if (!s_data) {
-		dev_err(&client->dev, "camera common data is NULL\n");
-#if defined(NV_I2C_DRIVER_STRUCT_REMOVE_RETURN_TYPE_INT) /* Linux 6.1 */
-		return -EINVAL;
-#else
-		return;
-#endif
-	}
-	priv = (struct imx477 *)s_data->priv;
+	struct imx477 *priv = (struct imx477 *)s_data->priv;
 
 	tegracam_v4l2subdev_unregister(priv->tc_dev);
 	tegracam_device_unregister(priv->tc_dev);
-#if defined(NV_I2C_DRIVER_STRUCT_REMOVE_RETURN_TYPE_INT) /* Linux 6.1 */
+
 	return 0;
-#endif
 }
 
 static const struct i2c_device_id imx477_id[] = {
