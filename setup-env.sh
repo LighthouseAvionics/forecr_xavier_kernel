@@ -1,11 +1,11 @@
 
-L4T_DIR=$1
 
-# check that the path is provided
-if [ -z "$L4T_DIR" ]; then
-    echo "Please provide the path to the Linux_for_Tegra directory"
-    exit 1
+# check if the L4T_DIR is already set
+if [ -z $L4T_DIR ]; then
+    L4T_DIR=$1
 fi
+
+
 
 GLIBC_FOLDER=$(pwd)/glibc
 
@@ -21,8 +21,6 @@ INSTALL_MOD_PATH=$L4T_DIR/rootfs
 KERNEL_OUTPUT=$(pwd)/kernel_out
 KERNEL_DEF_CONFIG=dsboard_agx_defconfig
 
-OOT_SOURCE_LIST="nvethernetrm  nvgpu  nvidia-oot hwpm hardware nvdisplay"
-KERNEL_MODULAR_BUILD="y"
 
 export NPROC=$(($(nproc)-2))
 export LOCALVERSION=-tegra
