@@ -7,7 +7,6 @@
 #include "tegra234-p3737-0000+p3701-xxxx-nv-common-hdmi.dtsi"
 #include "tegra234-p3701-0000.dtsi"
 #include "tegra234-p3701-0000-dsboard-agx.dtsi"
-#include "overlay/imx412.dtsi"
 
 / {
 	nvidia,dtsfilename = __FILE__;
