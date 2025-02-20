@@ -28,7 +28,7 @@
 #define IMX477_SHIFT_8_BITS			(8)
 #define IMX477_MIN_FRAME_LENGTH		        (256)
 #define IMX477_MAX_FRAME_LENGTH		        (65535)
-#define IMX477_MIN_COARSE_EXPOSURE	        (1)
+#define IMX477_MIN_COARSE_EXPOSURE	        (5)
 #define IMX477_MAX_COARSE_DIFF		        (10)
 #define IMX477_MASK_LSB_2_BITS			0x0003
 #define IMX477_MASK_LSB_8_BITS			0x00ff
