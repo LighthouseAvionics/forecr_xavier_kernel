@@ -1,1 +1,4 @@
 kernel-devicetree/generic-dts/dtbs/*
+*.o
+*.cmd
+out/
