@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2022-2024, NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
 
 #include "tegra234-p3701-0000-prod-overlay.dtsi"
+#include "tegra234-p3737-0000-camera-imx412-a00.dtsi"
 
 / {
 	bus@0 {
