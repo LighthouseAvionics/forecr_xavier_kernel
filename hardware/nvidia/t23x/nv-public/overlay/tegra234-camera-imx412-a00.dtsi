@@ -16,7 +16,7 @@
 						lhimx412_vi_in0: endpoint {
 							port-index = <0>;
 							bus-width = <2>;
-							remote-endpoint = <&lhim412_csi_out0>;
+							remote-endpoint = <&lhimx412_csi_out0>;
 						};
 					};
 				};
