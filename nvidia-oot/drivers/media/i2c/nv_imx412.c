@@ -26,7 +26,7 @@
 #include <media/imx412.h>
 
 #include "../platform/tegra/camera/camera_gpio.h"
-#include "imx412.h"
+#include "imx412_mode_tbls.h"
 
 #define IMX412_SENSOR_INTERNAL_CLK_FREQ   840000000
 
@@ -129,8 +129,7 @@ static int imx412_write_table(struct imx412 *priv, const imx412_reg table[])
 static int imx412_set_group_hold(struct tegracam_device *tc_dev, bool val)
 {
 	struct camera_common_data *s_data = tc_dev->s_data;
-	struct device *dev = tc_dev->dev;
-	int err;
+	struct device *dev = tc_dev->dev; int err;
 
 	dev_dbg(dev, "%s: Setting group hold control to: %u\n", __func__, val);
 
@@ -479,7 +478,7 @@ static int imx412_power_get(struct tegracam_device *tc_dev)
 	struct camera_common_power_rail *pw = s_data->power;
 	struct camera_common_pdata *pdata = s_data->pdata;
 	struct clk *parent;
-	int err = 0;
+	// int err = 0;
 
 	if (!pdata) {
 		dev_err(dev, "pdata missing\n");
@@ -505,7 +504,7 @@ static int imx412_power_get(struct tegracam_device *tc_dev)
 		}
 	}
 
-	return 0
+	return 0;
 
 	// /* analog 2.8v */
 	// if (pdata->regulators.avdd)
@@ -549,9 +548,9 @@ static struct camera_common_pdata *imx412_parse_dt(struct tegracam_device
 	struct device_node *np = dev->of_node;
 	struct camera_common_pdata *board_priv_pdata;
 	const struct of_device_id *match;
-	struct camera_common_pdata *ret = NULL;
+	// struct camera_common_pdata *ret = NULL;
 	int err = 0;
-	int gpio;
+	// int gpio;
 
 	if (!np)
 		return NULL;
