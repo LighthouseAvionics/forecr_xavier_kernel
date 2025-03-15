@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-FileCopyrightText: Copyright (c) 2017-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+#include "tegra234-camera-imx412-a00.dtsi"
+#include <dt-bindings/clock/tegra234-clock.h>
+#include <dt-bindings/gpio/tegra234-gpio.h>
+
+// #define CAM0_RST_L	TEGRA234_MAIN_GPIO(H, 3)
+
+#define CAMERA_I2C_MUX_BUS(x) (0x1E + x)
+
+/* camera control gpio definitions */
+
+/ {
+	fragment-camera-imx185@0 {
+		target-path = "/bus@0";
+		__overlay__ {
+
+			i2c@3180000 {
+				tca9548@70 {
+					compatible = "nxp,pca9548";
+					reg = <0x70>;
+					#address-cells = <1>;
+					#size-cells = <0>;
+					skip_mux_detect = "yes";
+					vcc-supply = <&p3737_vdd_1v8_sys>;
+					vcc-pullup-supply = <&battery_reg>;
+					force_bus_start = <CAMERA_I2C_MUX_BUS(0)>;
+
+					i2c@0 {
+						reg = <0>;
+						i2c-mux,deselect-on-exit;
+						#address-cells = <1>;
+						#size-cells = <0>;
+					};
+				};
+			};
+		};
+	};
+};

@@ -31,7 +31,7 @@
 #define IMX412_SENSOR_INTERNAL_CLK_FREQ   840000000
 
 static const struct of_device_id imx412_of_match[] = {
-	{.compatible = "ridgerun,imx412",},
+	{.compatible = "sony,imx412",},
 	{},
 };
 
@@ -419,7 +419,7 @@ static int imx412_power_off(struct camera_common_data *s_data)
 			dev_err(dev, "%s failed.\n", __func__);
 			return err;
 		}
-	} else {
+	} /* else {
 		if (pw->reset_gpio) {
 			if (gpiod_cansleep(gpio_to_desc(pw->reset_gpio)))
 				gpio_set_value_cansleep(pw->reset_gpio, 0);
@@ -436,6 +436,7 @@ static int imx412_power_off(struct camera_common_data *s_data)
 		if (pw->avdd)
 			regulator_disable(pw->avdd);
 	}
+	*/
 
 	pw->state = SWITCH_OFF;
 
@@ -450,6 +451,7 @@ static int imx412_power_put(struct tegracam_device *tc_dev)
 	if (unlikely(!pw))
 		return -EFAULT;
 
+	/*
 	if (likely(pw->dvdd))
 		devm_regulator_put(pw->dvdd);
 
@@ -465,6 +467,7 @@ static int imx412_power_put(struct tegracam_device *tc_dev)
 
 	if (likely(pw->reset_gpio))
 		gpio_free(pw->reset_gpio);
+	*/
 
 	return 0;
 }
@@ -502,39 +505,41 @@ static int imx412_power_get(struct tegracam_device *tc_dev)
 		}
 	}
 
-	/* analog 2.8v */
-	if (pdata->regulators.avdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->avdd,
-						   pdata->regulators.avdd);
-	/* IO 1.8v */
-	if (pdata->regulators.iovdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->iovdd,
-						   pdata->regulators.iovdd);
-	/* dig 1.2v */
-	if (pdata->regulators.dvdd)
-		err |= camera_common_regulator_get(dev,
-						   &pw->dvdd,
-						   pdata->regulators.dvdd);
-	if (err) {
-		dev_err(dev, "%s: unable to get regulator(s)\n", __func__);
-		goto done;
-	}
+	return 0
 
-	/* Reset or ENABLE GPIO */
-	pw->reset_gpio = pdata->reset_gpio;
-	err = gpio_request(pw->reset_gpio, "cam_reset_gpio");
-	if (err < 0) {
-		dev_err(dev, "%s: unable to request reset_gpio (%d)\n",
-			__func__, err);
-		goto done;
-	}
+	// /* analog 2.8v */
+	// if (pdata->regulators.avdd)
+		// err |= camera_common_regulator_get(dev,
+						   // &pw->avdd,
+						   // pdata->regulators.avdd);
+	// /* IO 1.8v */
+	// if (pdata->regulators.iovdd)
+		// err |= camera_common_regulator_get(dev,
+						   // &pw->iovdd,
+						   // pdata->regulators.iovdd);
+	// /* dig 1.2v */
+	// if (pdata->regulators.dvdd)
+		// err |= camera_common_regulator_get(dev,
+						   // &pw->dvdd,
+						   // pdata->regulators.dvdd);
+	// if (err) {
+		// dev_err(dev, "%s: unable to get regulator(s)\n", __func__);
+		// goto done;
+	// }
 
-done:
-	pw->state = SWITCH_OFF;
+	// /* Reset or ENABLE GPIO */
+	// pw->reset_gpio = pdata->reset_gpio;
+	// err = gpio_request(pw->reset_gpio, "cam_reset_gpio");
+	// if (err < 0) {
+		// dev_err(dev, "%s: unable to request reset_gpio (%d)\n",
+			// __func__, err);
+		// goto done;
+	// }
 
-	return err;
+// done:
+	// pw->state = SWITCH_OFF;
+
+	// return err;
 }
 
 static struct camera_common_pdata *imx412_parse_dt(struct tegracam_device
@@ -562,6 +567,7 @@ static struct camera_common_pdata *imx412_parse_dt(struct tegracam_device
 	if (!board_priv_pdata)
 		return NULL;
 
+	/*
 	gpio = of_get_named_gpio(np, "reset-gpios", 0);
 	if (gpio < 0) {
 		if (gpio == -EPROBE_DEFER)
@@ -570,6 +576,7 @@ static struct camera_common_pdata *imx412_parse_dt(struct tegracam_device
 		goto error;
 	}
 	board_priv_pdata->reset_gpio = (unsigned int)gpio;
+	*/
 
 	err = of_property_read_string(np, "mclk", &board_priv_pdata->mclk_name);
 	if (err)
@@ -590,10 +597,12 @@ static struct camera_common_pdata *imx412_parse_dt(struct tegracam_device
 
 	return board_priv_pdata;
 
+	/*
 error:
 	devm_kfree(dev, board_priv_pdata);
 
 	return ret;
+	*/
 }
 
 static int imx412_set_mode(struct tegracam_device *tc_dev)
