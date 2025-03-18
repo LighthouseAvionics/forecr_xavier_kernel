@@ -1,1 +1,17 @@
 kernel-devicetree/generic-dts/dtbs/*
+nvidia-oot/device-tree/platform/generic-dts/dtbs/*
+nvdisplay/kernel-open/nv_compiler.h
+nvdisplay/kernel-open/conftest/
+out/
+*.dtb
+*.dtbo
+*.o
+*.ko
+*.cmd
+*.mod*
+*.d
+*.order
+*.symvers
+**_out/
+*.o_binary
+*.S
