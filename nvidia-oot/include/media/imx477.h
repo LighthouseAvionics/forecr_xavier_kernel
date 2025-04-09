@@ -12,7 +12,7 @@
 #define __IMX477_H__
 
 /* imx477 - sensor parameters */
-#define IMX477_MIN_GAIN		                (0)
+#define IMX477_MIN_GAIN		                (11)
 #define IMX477_MAX_GAIN		                (978)
 #define IMX477_ANALOG_GAIN_C0		        (1024)
 #define IMX477_SHIFT_8_BITS			(8)
